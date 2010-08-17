@@ -154,7 +154,9 @@ class _Dispatcher(asyncore.dispatcher):
 
     def _read_until(self, delimiter, callback):
         self._read_buffer += self.recv(4096)
-        pos = self._read_buffer.find(delimiter)+len(delimiter)+1
+        pos = self._read_buffer.find(delimiter)
+        if pos >= 0:
+            pos += len(delimiter)+1
         if pos > 0:
             data = self._read_buffer[:pos]
             self._read_buffer = self._read_buffer[pos:]
