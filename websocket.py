@@ -15,6 +15,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 import sys, re, urlparse, socket, asyncore
 
+urlparse.uses_netloc.append("ws")
+urlparse.uses_fragment.append("ws")
+
 class WebSocket(object):
     def __init__(self, url, **kwargs):
         self.host, self.port, self.resource, self.secure = WebSocket._parse_url(url)
