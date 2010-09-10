@@ -173,7 +173,6 @@ class _Dispatcher(asyncore.dispatcher):
                 callback(data)
 
     def _handle_frame(self, frame):
-    	if frame[-1] != '\xff': print len(frame)
         assert frame[-1] == '\xff'
         if frame[0] != '\x00':
             raise WebSocketError('WebSocket stream error')
