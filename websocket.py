@@ -53,6 +53,9 @@ class WebSocket(object):
             raise NotImplementedError('Secure WebSocket not yet supported')
             # secure = True
             # port = p.port or 443
+        elif p.scheme == 'http':
+            secure = False
+            port = p.port or 80
         else:
             raise ValueError('Invalid URL scheme')
 
@@ -133,7 +136,9 @@ class _Dispatcher(asyncore.dispatcher):
         self.close()
         if self.ws.onclose:
             self.ws.onclose()
-
+    def handle_connect (self):
+        pass
+        
     def handle_read(self):
         if self._handshake_complete:
             self._read_until('\xff', self._handle_frame)
