@@ -15,6 +15,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 import sys, re, urlparse, socket, asyncore
 
+urlparse.uses_netloc.append("ws")
+urlparse.uses_fragment.append("ws")
+
 class WebSocket(object):
     def __init__(self, url, **kwargs):
         self.host, self.port, self.resource, self.secure = WebSocket._parse_url(url)
@@ -53,9 +56,6 @@ class WebSocket(object):
             raise NotImplementedError('Secure WebSocket not yet supported')
             # secure = True
             # port = p.port or 443
-        elif p.scheme == 'http':
-            secure = False
-            port = p.port or 80
         else:
             raise ValueError('Invalid URL scheme')
 
