@@ -13,7 +13,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>
 """
 
-import sys, re, urlparse, socket, asyncore
+import sys, re, urlparse, socket, asyncore, threading
+
+urlparse.uses_netloc.append("ws")
+urlparse.uses_fragment.append("ws")
 
 urlparse.uses_netloc.append("ws")
 urlparse.uses_fragment.append("ws")
@@ -84,13 +87,16 @@ class WebSocketError(Exception):
 
 class _Dispatcher(asyncore.dispatcher):
     def __init__(self, ws):
+    	self.lock = threading.Lock() #threadsafe addon
+    
         asyncore.dispatcher.__init__(self)
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connect((ws.host, ws.port))
         
         self.ws = ws
         self._read_buffer = ''
-        self._write_buffer = ''
+        with self.lock: #threadsafe addon
+        	self._write_buffer = ''
         self._handshake_complete = False
 
         if self.ws.port != 80:
@@ -146,20 +152,25 @@ class _Dispatcher(asyncore.dispatcher):
             self._read_until('\r\n\r\n', self._handle_header)
 
     def handle_write(self):
-        sent = self.send(self._write_buffer)
-        self._write_buffer = self._write_buffer[sent:]
+    	with self.lock: #threadsafe addon
+		    sent = self.send(self._write_buffer)
+		    self._write_buffer = self._write_buffer[sent:]
 
     def writable(self):
-        return len(self._write_buffer) > 0
+    	with self.lock: #threadsafe addon
+        	return len(self._write_buffer) > 0
 
     def write(self, data):
-        self._write_buffer += data # TODO: separate buffer for handshake from data to
-                                   # prevent mix-up when send() is called before
-                                   # handshake is complete?
+        with self.lock: #threadsafe addon
+		    self._write_buffer += data # TODO: separate buffer for handshake from data to
+		                               # prevent mix-up when send() is called before
+		                               # handshake is complete?
 
     def _read_until(self, delimiter, callback):
         self._read_buffer += self.recv(4096)
-        pos = self._read_buffer.find(delimiter)+len(delimiter)+1
+        pos = self._read_buffer.find(delimiter)
+        if pos >= 0:
+            pos += len(delimiter)
         if pos > 0:
             data = self._read_buffer[:pos]
             self._read_buffer = self._read_buffer[pos:]
@@ -231,3 +242,4 @@ def _cookie_for_domain(cookie, domain):
 
 def _utf8(s):
     return s.encode('utf-8')
+
