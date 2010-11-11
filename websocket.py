@@ -18,9 +18,6 @@ import sys, re, urlparse, socket, asyncore, threading
 urlparse.uses_netloc.append("ws")
 urlparse.uses_fragment.append("ws")
 
-urlparse.uses_netloc.append("ws")
-urlparse.uses_fragment.append("ws")
-
 class WebSocket(object):
     def __init__(self, url, **kwargs):
         self.host, self.port, self.resource, self.secure = WebSocket._parse_url(url)
