@@ -84,45 +84,45 @@ class WebSocketError(Exception):
 
 class _Dispatcher(asyncore.dispatcher):
     def __init__(self, ws):
-    	self.lock = threading.Lock() #threadsafe addon
-    
-      asyncore.dispatcher.__init__(self)
-      self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
-      self.connect((ws.host, ws.port))
-      
-      self.ws = ws
-      self._read_buffer = ''
-      with self.lock: #threadsafe addon
-      	self._write_buffer = ''
-      self._handshake_complete = False
-
-      if self.ws.port != 80:
-          hostport = '%s:%d' % (self.ws.host, self.ws.port)
-      else:
-          hostport = self.ws.host
-          
-      fields = [
-          'Upgrade: WebSocket',
-          'Connection: Upgrade',
-          'Host: ' + hostport,
-          'Origin: http://' + hostport,
-          #'Sec-WebSocket-Key1: %s' % WebSocket.generate_key(),
-          #'Sec-WebSocket-Key2: %s' % WebSocket.generate_key()
-      ]
-      if self.ws.protocol: fields['Sec-WebSocket-Protocol'] = self.ws.protocol
-      if self.ws.cookie_jar:
-          cookies = filter(lambda c: _cookie_for_domain(c, _eff_host(self.ws.host)) and \
-                           _cookie_for_path(c, self.ws.resource) and \
-                           not c.is_expired(), self.ws.cookie_jar)
-          
-          for cookie in cookies:
-              fields.append('Cookie: %s=%s' % (cookie.name, cookie.value))
-      
-      # key3 = ''.join(map(unichr, (random.randrange(256) for i in xrange(8))))
-      self.write(_utf8('GET %s HTTP/1.1\r\n' \
-                       '%s\r\n\r\n' % (self.ws.resource,
-                                       '\r\n'.join(fields))))
-                                       # key3)))
+        self.lock = threading.Lock() #threadsafe addon
+        
+        asyncore.dispatcher.__init__(self)
+        self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.connect((ws.host, ws.port))
+        
+        self.ws = ws
+        self._read_buffer = ''
+        with self.lock: #threadsafe addon
+        	self._write_buffer = ''
+        self._handshake_complete = False
+        
+        if self.ws.port != 80:
+            hostport = '%s:%d' % (self.ws.host, self.ws.port)
+        else:
+            hostport = self.ws.host
+        
+        fields = [
+            'Upgrade: WebSocket',
+            'Connection: Upgrade',
+            'Host: ' + hostport,
+            'Origin: http://' + hostport,
+            #'Sec-WebSocket-Key1: %s' % WebSocket.generate_key(),
+            #'Sec-WebSocket-Key2: %s' % WebSocket.generate_key()
+        ]
+        if self.ws.protocol: fields['Sec-WebSocket-Protocol'] = self.ws.protocol
+        if self.ws.cookie_jar:
+            cookies = filter(lambda c: _cookie_for_domain(c, _eff_host(self.ws.host)) and \
+                             _cookie_for_path(c, self.ws.resource) and \
+                             not c.is_expired(), self.ws.cookie_jar)
+            
+            for cookie in cookies:
+                fields.append('Cookie: %s=%s' % (cookie.name, cookie.value))
+        
+        # key3 = ''.join(map(unichr, (random.randrange(256) for i in xrange(8))))
+        self.write(_utf8('GET %s HTTP/1.1\r\n' \
+                         '%s\r\n\r\n' % (self.ws.resource,
+                                         '\r\n'.join(fields))))
+                                         # key3)))
 
     def handl_expt(self):
         self.handle_error()
@@ -149,19 +149,19 @@ class _Dispatcher(asyncore.dispatcher):
             self._read_until('\r\n\r\n', self._handle_header)
 
     def handle_write(self):
-    	with self.lock: #threadsafe addon
-		    sent = self.send(self._write_buffer)
-		    self._write_buffer = self._write_buffer[sent:]
+        with self.lock: #threadsafe addon
+            sent = self.send(self._write_buffer)
+            self._write_buffer = self._write_buffer[sent:]
 
     def writable(self):
-    	with self.lock: #threadsafe addon
-        	return len(self._write_buffer) > 0
+        with self.lock: #threadsafe addon
+            return len(self._write_buffer) > 0
 
     def write(self, data):
-      with self.lock: #threadsafe addon
-		    self._write_buffer += data # TODO: separate buffer for handshake from data to
-		                               # prevent mix-up when send() is called before
-		                               # handshake is complete?
+        with self.lock: #threadsafe addon
+            self._write_buffer += data # TODO: separate buffer for handshake from data to
+                                  # prevent mix-up when send() is called before
+                                  # handshake is complete?
 
     def _read_until(self, delimiter, callback):
         self._read_buffer += self.recv(4096)
