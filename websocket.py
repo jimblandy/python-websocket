@@ -31,8 +31,8 @@ class WebSocket(object):
 
         self._dispatcher = _Dispatcher(self)
 
-    def send(self, data):
-        self._dispatcher.write('\x00' + _utf8(data) + '\xff')
+    def send(self, data,sync=False):
+        self._dispatcher.write('\x00' + _utf8(data) + '\xff',sync)
 
     def close(self):
         self._dispatcher.handle_close()
@@ -157,12 +157,13 @@ class _Dispatcher(asyncore.dispatcher):
         with self.lock: #threadsafe addon
             return len(self._write_buffer) > 0
 
-    def write(self, data):
+    def write(self, data,sync=False):
         with self.lock: #threadsafe addon
             self._write_buffer += data # TODO: separate buffer for handshake from data to
                                   # prevent mix-up when send() is called before
                                   # handshake is complete?
-        self.handle_write()
+        if sync:
+          self.handle_write()
 
     def _read_until(self, delimiter, callback):
         self._read_buffer += self.recv(4096)
