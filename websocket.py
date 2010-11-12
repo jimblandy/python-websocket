@@ -162,6 +162,7 @@ class _Dispatcher(asyncore.dispatcher):
             self._write_buffer += data # TODO: separate buffer for handshake from data to
                                   # prevent mix-up when send() is called before
                                   # handshake is complete?
+        self.handle_write()
 
     def _read_until(self, delimiter, callback):
         self._read_buffer += self.recv(4096)
